@@ -42,7 +42,12 @@
   .tbadge{ display:inline-block; margin-top:7px; font-size:10.5px; padding:2px 8px; border-radius:20px; color:#fff; letter-spacing:.5px }
   .b-gen{background:var(--gen)} .b-mg{background:var(--mg)} .b-proj{background:var(--proj)} .b-mani{background:var(--mani)}
   .info-dot{ position:absolute; top:8px; right:9px; width:20px;height:20px; border-radius:50%; background:var(--gold); color:#fff; font-size:12px; line-height:20px; cursor:pointer; font-weight:700 }
-  .person .seehint{ font-size:10px; color:var(--gold-d); margin-top:6px; opacity:.85 }
+  .deepbtn{ display:block; width:100%; margin-top:9px; border:0; cursor:pointer;
+    background:linear-gradient(135deg,var(--gold),var(--gold-d)); color:#fff; font-size:12.5px; font-weight:700;
+    padding:8px 0; border-radius:11px; letter-spacing:1px; box-shadow:0 3px 9px rgba(150,115,63,.32); transition:.15s }
+  .deepbtn:hover{ filter:brightness(1.08); transform:translateY(-1px); box-shadow:0 5px 14px rgba(150,115,63,.4) }
+  .deepbtn:active{ transform:translateY(0) }
+  .draghint{ font-size:10px; color:var(--ink-soft); margin-top:6px; opacity:.8 }
   .field-outer{ margin-top:12px }
   .field{ min-height:170px; border:2px dashed var(--line); border-radius:24px; background:rgba(255,253,249,.6); padding:18px; transition:.2s; position:relative; }
   .field.over{ border-color:var(--gold); background:rgba(185,149,95,.08) }
@@ -116,8 +121,8 @@
 <body>
 <header>
   <h1>我們家的人類圖 · 關係場</h1>
-  <p>把家人拖進圓場，看他們之間的<b>能量化學反應</b>（互補相吸 / 同頻 / 誰點亮誰）。
-  點卡片的 <b>ⓘ</b> 讀每個人的<b>完整本命深解</b>。最下面是 <b>2026 流年行運</b>。</p>
+  <p>點每張卡片的 <b>🔍 深入分析</b> 讀每個人的<b>完整本命深解</b>；把家人<b>拖進圓場</b>，看他們之間的
+  <b>能量化學反應</b>（互補相吸 / 同頻 / 誰點亮誰）。最下面是 <b>2026 流年行運</b>。</p>
   <nav class="nav">
     <a href="#field-sec">關係場合圖</a>
     <a href="#people-sec">個人本命深解</a>
@@ -126,7 +131,7 @@
 </header>
 
 <div class="wrap">
-  <div id="people-sec" class="section-title"><span>家人（點 ⓘ 看本命深解 · 拖進圓場看合圖）</span></div>
+  <div id="people-sec" class="section-title"><span>家人（點「🔍 深入分析」看本命 · 或拖進圓場看合圖）</span></div>
   <div class="tray" id="tray"></div>
 
   <div class="field-outer">
@@ -290,9 +295,11 @@ const scene=new Set();
 const tray=document.getElementById('tray'), field=document.getElementById('field'), chips=document.getElementById('chips');
 const hint=document.getElementById('hint'), analysis=document.getElementById('analysis'), clearBtn=document.getElementById('clearBtn');
 ORDER.forEach(id=>{ const p=PEOPLE[id]; const el=document.createElement('div'); el.className='person'; el.dataset.id=id;
-  el.innerHTML=`<div class="info-dot" data-info="${id}">ⓘ</div><div class="ava" style="background:${p.color}">${p.emoji}</div>
+  el.innerHTML=`<div class="ava" style="background:${p.color}">${p.emoji}</div>
     <div class="nm">${p.name}</div><div class="rl">${p.role}</div>
-    <span class="tbadge ${TYPE[p.type].cls}">${TYPE[p.type].label}</span><div class="seehint">點 ⓘ 本命深解</div>`;
+    <span class="tbadge ${TYPE[p.type].cls}">${TYPE[p.type].label}</span>
+    <button class="deepbtn" data-info="${id}">🔍 深入分析</button>
+    <div class="draghint">或拖我到下方圓場</div>`;
   tray.appendChild(el); });
 
 let drag=null;
