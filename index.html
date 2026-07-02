@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>我們家的人類圖 · 關係場</title>
+<style>
+  :root{
+    --bg:#f6f1ea; --bg2:#efe6d8; --ink:#3a332c; --ink-soft:#6b6155;
+    --line:#e0d5c4; --card:#fffdf9; --gold:#b9955f; --gold-d:#96733f;
+    --rose:#c98a86; --sage:#8ea58c; --sky:#7d9bb0; --plum:#9b8bb0;
+    --shadow:0 6px 22px rgba(120,95,60,.14);
+    --gen:#c98a86; --mg:#d19a5a; --proj:#7d9bb0; --mani:#9b8bb0;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+    background:radial-gradient(1200px 600px at 50% -10%, #fbf7f0, var(--bg));
+    color:var(--ink); line-height:1.75; -webkit-font-smoothing:antialiased;
+    padding-bottom:60px;
+  }
+  header{ text-align:center; padding:38px 20px 6px }
+  header h1{ font-size:26px; margin:0 0 6px; letter-spacing:2px; font-weight:700 }
+  header p{ margin:2px auto; color:var(--ink-soft); font-size:14px; max-width:660px }
+  .wrap{ max-width:1080px; margin:0 auto; padding:0 16px }
+
+  /* nav */
+  .nav{ display:flex; gap:8px; justify-content:center; margin:18px 0 4px; flex-wrap:wrap }
+  .nav a{ text-decoration:none; color:var(--gold-d); background:var(--card); border:1px solid var(--line);
+    padding:7px 16px; border-radius:22px; font-size:13.5px; font-weight:700; box-shadow:var(--shadow) }
+  .nav a:hover{ background:var(--gold); color:#fff }
+
+  .section-title{ font-size:15px; color:var(--gold-d); letter-spacing:3px;
+    text-align:center; margin:38px 0 14px; font-weight:700 }
+  .section-title span{ display:inline-block; border-bottom:2px solid var(--line); padding:0 14px 6px }
+  .lead{ text-align:center; color:var(--ink-soft); font-size:13.5px; max-width:640px; margin:-6px auto 10px }
+
+  .tray{ display:flex; flex-wrap:wrap; gap:12px; justify-content:center }
+  .person{
+    position:relative; width:118px; background:var(--card); border:1px solid var(--line);
+    border-radius:16px; padding:14px 10px 12px; text-align:center; cursor:grab;
+    box-shadow:var(--shadow); transition:transform .15s, box-shadow .15s, opacity .2s;
+    touch-action:none; user-select:none;
+  }
+  .person:hover{ transform:translateY(-3px); box-shadow:0 10px 26px rgba(120,95,60,.22) }
+  .person.picked{ opacity:.4 }
+  .person.dragging{ opacity:.5 }
+  .ava{ width:52px;height:52px;border-radius:50%; margin:0 auto 8px; display:flex;
+    align-items:center;justify-content:center; font-size:24px; color:#fff; font-weight:700 }
+  .person .nm{ font-weight:700; font-size:15px }
+  .person .rl{ font-size:11px; color:var(--ink-soft); margin-top:1px }
+  .tbadge{ display:inline-block; margin-top:7px; font-size:10.5px; padding:2px 8px;
+    border-radius:20px; color:#fff; letter-spacing:.5px }
+  .b-gen{background:var(--gen)} .b-mg{background:var(--mg)}
+  .b-proj{background:var(--proj)} .b-mani{background:var(--mani)}
+  .info-dot{ position:absolute; top:8px; right:9px; width:20px;height:20px; border-radius:50%;
+    background:var(--gold); color:#fff; font-size:12px; line-height:20px; cursor:pointer; font-weight:700 }
+  .person .seehint{ font-size:10px; color:var(--gold-d); margin-top:6px; opacity:.85 }
+
+  .field-outer{ margin-top:12px }
+  .field{
+    min-height:180px; border:2px dashed var(--line); border-radius:24px; background:rgba(255,253,249,.6);
+    padding:18px; transition:border-color .2s, background .2s; position:relative;
+  }
+  .field.over{ border-color:var(--gold); background:rgba(185,149,95,.08) }
+  .field-hint{ text-align:center; color:var(--ink-soft); font-size:14px; padding:34px 10px }
+  .field-hint b{ color:var(--gold-d) }
+  .chips{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:6px }
+  .chip{ display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line);
+    border-radius:30px; padding:5px 12px 5px 6px; box-shadow:var(--shadow); font-weight:600; font-size:14px }
+  .chip .ava{ width:30px;height:30px;font-size:15px;margin:0 }
+  .chip .x{ cursor:pointer; color:var(--ink-soft); font-size:16px; margin-left:2px; padding:0 2px }
+  .chip .x:hover{ color:var(--rose) }
+  .clearbtn{ display:block; margin:14px auto 0; background:none; border:1px solid var(--line);
+    color:var(--ink-soft); border-radius:20px; padding:5px 16px; cursor:pointer; font-size:13px }
+  .clearbtn:hover{ border-color:var(--rose); color:var(--rose) }
+
+  .presets{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:14px }
+  .preset{ background:var(--bg2); border:1px solid var(--line); color:var(--ink);
+    border-radius:20px; padding:6px 14px; cursor:pointer; font-size:13px; transition:.15s }
+  .preset:hover{ background:var(--gold); color:#fff; border-color:var(--gold) }
+
+  .analysis{ margin-top:22px }
+  .a-card{ background:var(--card); border:1px solid var(--line); border-radius:18px;
+    padding:20px 22px; margin-bottom:16px; box-shadow:var(--shadow); animation:rise .35s ease }
+  @keyframes rise{ from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none} }
+  .a-card h3{ margin:0 0 10px; font-size:16px; color:var(--gold-d); letter-spacing:1px;
+    display:flex; align-items:center; gap:8px }
+  .a-card h3 .ic{ font-size:18px }
+  .a-card p{ margin:6px 0 }
+  .a-card ul{ margin:8px 0 0; padding-left:2px; list-style:none }
+  .a-card li{ position:relative; padding-left:20px; margin:8px 0 }
+  .a-card li::before{ content:"❋"; position:absolute; left:0; color:var(--gold); font-size:12px; top:4px }
+  .tag{ display:inline-block; font-size:11px; padding:1px 8px; border-radius:12px;
+    background:var(--bg2); color:var(--gold-d); margin:0 4px 4px 0 }
+  .milliya-note{ background:linear-gradient(180deg,#fbf3ea,#f7ead9); border:1px solid #ecdcc4 }
+  .milliya-note h3{ color:#a86b48 }
+  .curated{ border-left:4px solid var(--gold) }
+  .small{ font-size:12.5px; color:var(--ink-soft) }
+
+  /* calendar */
+  .cal-months{ display:flex; flex-wrap:wrap; gap:7px; justify-content:center; margin-bottom:16px }
+  .mbtn{ background:var(--card); border:1px solid var(--line); color:var(--ink); border-radius:12px;
+    padding:8px 13px; cursor:pointer; font-size:13.5px; font-weight:600; transition:.15s; min-width:52px }
+  .mbtn:hover{ border-color:var(--gold) }
+  .mbtn.on{ background:var(--gold); color:#fff; border-color:var(--gold) }
+  .mbtn .now{ display:block; font-size:9px; letter-spacing:1px }
+  .cal-collective{ background:linear-gradient(180deg,#f3ece0,#efe6d8); border:1px solid var(--line);
+    border-radius:18px; padding:18px 22px; margin-bottom:16px }
+  .cal-collective h3{ margin:0 0 6px; color:var(--gold-d); font-size:16px }
+  .cal-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px }
+  .pmonth{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:13px 15px; box-shadow:var(--shadow) }
+  .pmonth .ph{ display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; margin-bottom:5px }
+  .pmonth .ph .ava{ width:28px;height:28px;font-size:14px;margin:0 }
+  .pmonth .ph small{ font-weight:400; color:var(--ink-soft); font-size:11px }
+  .pmonth p{ margin:4px 0 0; font-size:13px; line-height:1.7 }
+  .pmonth .th{ font-size:11px; color:var(--gold-d); margin-top:6px }
+  @media(max-width:640px){ .cal-grid{ grid-template-columns:1fr } }
+
+  /* modal */
+  .modal-bg{ position:fixed; inset:0; background:rgba(58,51,44,.55); backdrop-filter:blur(3px);
+    display:none; align-items:center; justify-content:center; z-index:50; padding:16px }
+  .modal-bg.on{ display:flex }
+  .modal{ background:var(--card); border-radius:20px; max-width:600px; width:100%;
+    max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.3); animation:rise .3s }
+  .modal-hd{ padding:18px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:14px;
+    position:sticky; top:0; background:var(--card); border-radius:20px 20px 0 0; z-index:2 }
+  .modal-hd .ava{ margin:0 }
+  .modal-hd .nm{ font-size:20px; font-weight:700 }
+  .modal-hd .rl{ font-size:13px; color:var(--ink-soft) }
+  .modal-hd .close{ margin-left:auto; cursor:pointer; font-size:26px; color:var(--ink-soft); line-height:1 }
+  .modal-bd{ padding:20px 24px }
+  .modal-bd img{ width:100%; border-radius:12px; border:1px solid var(--line); margin:6px 0 16px; background:#fff }
+  .chart-ph{ text-align:center; color:var(--ink-soft); font-size:13px; padding:26px 14px; margin:6px 0 16px;
+    border:1px dashed var(--line); border-radius:12px; background:var(--bg2) }
+  .kv{ display:grid; grid-template-columns:auto 1fr; gap:6px 14px; margin:6px 0 18px; font-size:13.5px }
+  .kv dt{ color:var(--gold-d); font-weight:700 }
+  .kv dd{ margin:0 }
+  .sec{ margin:18px 0; padding-top:16px; border-top:1px solid var(--line) }
+  .sec h4{ color:var(--gold-d); margin:0 0 7px; font-size:15px; display:flex; align-items:center; gap:7px }
+  .sec p{ margin:6px 0; font-size:14px }
+  .sec .lbl{ font-weight:700; color:var(--ink) }
+  .pnote{ background:linear-gradient(180deg,#fbf3ea,#f7ead9); border:1px solid #ecdcc4; border-radius:14px;
+    padding:14px 16px; margin-top:16px }
+  .pnote h4{ border:0; color:#a86b48; margin-top:0 }
+
+  footer{ text-align:center; color:var(--ink-soft); font-size:12px; margin-top:44px; padding:0 20px }
+  footer .disc{ max-width:700px; margin:10px auto; line-height:1.7 }
+  @media(max-width:520px){
+    .person{ width:calc(50% - 8px) } .ava{ width:46px;height:46px;font-size:21px }
+    header h1{font-size:22px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>我們家的人類圖 · 關係場</h1>
+  <p>把家人拖進圓場，看他們在一起的能量。點卡片上的 <b>ⓘ</b> 讀每個人的<b>深入分析</b>。
+  最下面有 <b>2026 流年月曆</b>，每個人每個月該注意什麼。</p>
+  <nav class="nav">
+    <a href="#field-sec">關係場</a>
+    <a href="#people-sec">個人深入分析</a>
+    <a href="#cal-sec">2026 流年月曆</a>
+  </nav>
+</header>
+
+<div class="wrap">
+
+  <div id="people-sec" class="section-title"><span>家人（點 ⓘ 看深入分析 · 拖進下方圓場看關係）</span></div>
+  <div class="tray" id="tray"></div>
+
+  <div class="field-outer">
+    <div id="field-sec" class="section-title"><span>關係場</span></div>
+    <div class="field" id="field">
+      <div class="field-hint" id="hint">把家人拖到這裡，或點卡片加入 —— 我會讀出他們在一起的樣子 ✨</div>
+      <div class="chips" id="chips"></div>
+    </div>
+    <button class="clearbtn" id="clearBtn" style="display:none">清空關係場</button>
+    <div class="presets" id="presets"></div>
+  </div>
+
+  <div class="analysis" id="analysis"></div>
+
+  <!-- 2026 流年月曆 -->
+  <div id="cal-sec" class="section-title"><span>2026 流年月曆 · 每人每月提醒</span></div>
+  <p class="lead">選一個月份，看這個月的整體能量，以及每位家人這個月最該練習的事。
+  （此為把各人<b>人類圖策略</b>對應到 2026 的<b>生活運用曆</b>；精準到太陽行運逐一啟動哪個閘門的流年，需各人出生資料，可另做深版。）</p>
+  <div class="cal-months" id="calMonths"></div>
+  <div class="cal-collective" id="calCollective"></div>
+  <div class="cal-grid" id="calGrid"></div>
+
+</div>
+
+<div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
+
+<footer>
+  <div class="disc">
+    這份解讀以每個人可靠讀到的<b>類型 · 內在權威 · 人生角色 · 輪迴交叉</b>為根據，
+    結合人類圖經典原理生成；輪迴交叉的意涵屬通俗解讀（參考）。這是「能量傾向」的參考，
+    不是命定，也不取代你對家人的真實認識與愛。<br>
+    製作：Birth with Milliya ｜ 僅供家人瀏覽。
+  </div>
+</footer>
+
+<script>
+/* ============== 資料（以圖卡可靠讀到的欄位為準） ============== */
+const PEOPLE = {
+  milliya:{name:"Milliya",role:"我 · 媽媽",emoji:"🌙",color:"var(--gen)",
+    type:"gen",profile:"3/5",definition:"一分人（單一定義）",authority:"sacral",
+    strategy:"等待回應",notSelf:"挫敗感",cross:"右角度交叉之愛之船4（10/15 ｜ 46/25）",img:"charts/milliya.jpg",
+    crossMeaning:"「愛之船」的命題，是把愛與生命承載著、活出來——透過真實地愛自己（10 自我的行為）、以及對生命的深愛與投入（15 極端之愛、46 身體的愛、25 純真），去感染身邊的人。你天生的功課，是先愛自己活出的樣子，愛才會自然流向別人。",
+    personal:"你是家裡的月亮——穩定的薦骨能量把一家人涵蓋進來。但你 3/5 帶著『被投射』的線：別人容易對你有期待，也容易在你試錯時誤解你。請記得，你的智慧是『跌出來的』，跌倒不是失敗；而別人的投射不是你的責任。回到你的策略——等待回應，你不需要主動撐起每一件事。"},
+  rio:{name:"Rio",role:"老大 · 7歲 · 兒子",emoji:"🦁",color:"#d98c6a",
+    type:"gen",profile:"6/2",definition:"三分人（三重分裂）",authority:"sacral",
+    strategy:"等待回應",notSelf:"挫敗感",cross:"左角度交叉之輪迴（24/44 ｜ 13/7）",img:"charts/rio.jpg",
+    crossMeaning:"「輪迴」的命題，圍繞著記憶、回歸與方向（24 回歸與消化、44 過去的模式、13 傾聽與收集故事、7 未來的方向）。他這一生會反覆咀嚼經驗、把過去整理成方向感——是個慢慢『想通、再想通』的孩子，別催他一次到位。",
+    personal:"Rio 是薦骨滿滿的小獅子。跟他說話用『是非題』（你想不想／要不要），讓他的身體回答，別用開放式問題或命令。他 6/2 三分人——現在正在人生的『前段體驗期』，需要親身跌撞來學，也需要獨處與玩伴兩者。他常常需要別人或環境幫他把狀態『接起來』，所以陪伴與空間他都要。"},
+  yuna:{name:"Yuna",role:"老二 · 5歲 · 女兒",emoji:"🌸",color:"var(--proj)",
+    type:"proj",profile:"6/2",definition:"二分人（分裂）",authority:"splenic",
+    strategy:"等待被邀請",notSelf:"苦澀",cross:"左角度交叉之個人主義2（38/39 ｜ 57/51）",img:"charts/yuna.jpg",
+    crossMeaning:"「個人主義」的命題，是找到『值得為它奮鬥』的事，並忠於自己的獨特（38 奮鬥者、39 挑動、57 直覺的清明、51 震撼與勇氣）。她天生帶著情緒張力與敏銳直覺，會為在乎的事情『鬧』——那不是任性，是她在為自己重要的東西發聲。",
+    personal:"Yuna 是投射者，能量像手機電池，會用完、需要充。她最需要的兩件事：被『邀請』和被『看見』。千萬別用『你看哥哥都可以』去比較——那會直接踩到她投射者的苦澀。她的直覺很準（脾臟權威），會突然說出很到位的話。給她單獨的邀請、具體的稱讚、以及每天一段自己的安靜時間，她會又穩又發光。"},
+  fumi:{name:"Fumi",role:"前夫 · 孩子的爸",emoji:"🌊",color:"var(--mg)",
+    type:"mg",profile:"6/2",definition:"二分人（分裂）",authority:"emotional",
+    strategy:"等待回應，再告知",notSelf:"挫敗 / 憤怒",cross:"左角度交叉之二元性2（34/20 ｜ 40/37）",img:"charts/fumi.jpg",
+    crossMeaning:"「二元性」的命題，是在關係與兩端之間找到平衡（34 力量、20 當下、40 意志與獨處、37 家庭與情感契約）。他這一生的功課常繞著『我與我們』——如何既有力量與獨立，又能承諾與連結。",
+    personal:"Fumi 是顯示生產者、情緒權威。共親職最重要的一件事：談孩子的大事別當場逼他表態，他需要讓情緒的浪走完——給一句『你想一下，明天再說』，得到的答案穩定得多。他 6/2、非自己是挫敗/憤怒，被卡住或沒被知會時最容易上火，所以行程、決定先讓他知道，合作會順很多。"},
+  john:{name:"John",role:"爸爸（外公）",emoji:"⛰️",color:"var(--mani)",
+    type:"mani",profile:"1/3",definition:"一分人（單一定義）",authority:"emotional",
+    strategy:"告知後行動",notSelf:"憤怒",cross:"右角度交叉之統領3（47/22 ｜ 45/26）",img:"charts/john.jpg",
+    crossMeaning:"「統領」的命題，是天生的領導與駕馭（45 王者/資源的分配、26 操盤與說服、22 優雅與開放、47 領悟）。他這一生帶著『統御一方』的能量——想主導、想帶領。這不是霸道，是他的設計本質。",
+    personal:"John 是顯示者——家裡少見的『發起者』。他天生要自己啟動、自己來；被替他決定或被攔，會憤怒。跟他相處的關鍵不是幫他做，而是尊重他自己來、並希望他『先說一聲、也讓他先說一聲』。他又是情緒權威加 1 線研究者：他要自己弄懂、驗證過才信，別急著要他當場點頭。"},
+  krisana:{name:"Krisana",role:"媽媽（外婆）",emoji:"🔥",color:"#c56f4e",
+    type:"mg",profile:"5/1",definition:"二分人（分裂）",authority:"emotional",
+    strategy:"等待回應，再告知",notSelf:"挫敗 / 憤怒",cross:"左角度交叉之二元性（20/34 ｜ 37/40）",img:"charts/krisana.jpg",
+    crossMeaning:"「二元性」的命題（20 當下、34 力量、37 情感契約、40 意志與獨處）——在關係、家庭與自我意志之間拿捏。她一生的張力常是：既要為家付出、承諾，又需要保有自己的力量與獨處。",
+    personal:"Krisana 是顯示生產者、情緒權威，帶著 5/1 的『投射場』——別人很容易把期待放在她身上（覺得她應該能搞定一切），久了會累、會不平。理解她的爆點：那多半是背了太多不屬於她的期待＋情緒浪頭。給她時間沉澱、也讓她知道她可以說不。她的答案在睡一晚之後才最清明。"},
+  kayla:{name:"Kayla",role:"姊姊",emoji:"🌿",color:"var(--sage)",
+    type:"gen",profile:"6/2",definition:"二分人（分裂）",authority:"emotional",
+    strategy:"等待回應",notSelf:"挫敗感",cross:"左角度交叉之衝突2（26/45 ｜ 6/36）",img:"charts/kayla.jpg",
+    crossMeaning:"「衝突」的命題，是在張力與摩擦中前進、帶來體驗（6 情緒的摩擦、36 危機與新體驗、26 說服與傳遞、45 分享資源）。她的人生會遇到不少『對撞』的場面——那是她學習與成長的方式，不是她愛惹事。",
+    personal:"Kayla 是生產者、情緒權威。她的『好』需要時間醞釀，別在她情緒上頭時敲定事情（家族聚會、照顧爸媽的分工）。她 6/2，需要獨處充電——別把她想安靜誤會成不合群。跟她確認重要的事，給她一晚，答案會更算數。"},
+  yiyin:{name:"Yiyin",role:"妹妹",emoji:"🕊️",color:"var(--sky)",
+    type:"proj",profile:"6/2",definition:"二分人（分裂）",authority:"splenic",
+    strategy:"等待被邀請",notSelf:"苦澀",cross:"左角度交叉之飛機2（6/36 ｜ 15/10）",img:"charts/yiyin.jpg",
+    crossMeaning:"「飛機」的命題，是關於起飛、視野與超越（6/36 情緒的體驗與轉化、15 極端之愛與人性的節奏、10 自我與行為）。她這一生會經歷情緒的高低起伏，最終是為了『飛起來』——用更高的視角看見人性。",
+    personal:"Yiyin 是投射者、直覺權威。她話不一定多，但一開口常常很準（脾臟的第一下直覺）。在家人聚會裡，她最需要被『邀請發言』——主動問她『你怎麼看？』，會得到意想不到的洞見。別讓她硬撐生產者的節奏，她需要被認可、也需要獨處回血。"},
+  zixin:{name:"子芯",role:"妹妹的女兒 · 外甥女",emoji:"🌷",color:"#b08bb0",
+    type:"proj",profile:"3/5",definition:"一分人（單一定義）",authority:"emotional",
+    strategy:"等待被邀請",notSelf:"苦澀",cross:"右角度交叉之感染（30/29 ｜ 14/8）",img:"charts/zixin.jpg",
+    crossMeaning:"「感染」的命題，是用感受與渴望去點燃別人（30 慾望之火、29 全心投入的『答應』、14 力量與資源、8 貢獻與獨特）。她天生帶著一種會『感染人』的熱度——她的渴望與投入，會帶動周圍。",
+    personal:"子芯是投射者、而且是『情緒型權威』的投射者（跟 Yuna、Yiyin 的直覺型不同）——她的答案不在當下，要等情緒的浪走完。她 3/5，會用親身試錯學習（跌撞是她的方法，不是壞事），也活在別人的投射場中（容易被期待、也容易被誤解）。給她的愛是：被邀請、被看見、不逼她當下決定、允許她跌倒了再爬起來。"},
+};
+const ORDER=["milliya","rio","yuna","fumi","john","krisana","kayla","yiyin","zixin"];
+
+const TYPE={
+  gen:{label:"生產者",cls:"b-gen",
+    aura:"開放而包覆的能量場，會把周圍的人溫柔地涵蓋進來",
+    gift:"有穩定的薦骨動力，能一件件把事情做出來、把生活撐起來",
+    key:"用『回應』過生活——先等事情/問題來到，身體發出『嗯哼（要）』或『嗯嗯（不要）』再動",
+    sign:"對了就有滿足感，錯了就累積挫敗感",
+    deep:"你是這世界的『建造者』，佔了人口約七成。你的能量來自薦骨這個馬達——只要做著讓你有回應、有熱情的事，你會愈做愈有勁、幾乎用不完；但一旦勉強去做沒有回應的事，能量會卡住、變成挫敗與疲累。你不是用『發起』過人生的人，而是用『回應』——讓對的事、對的人先來到你面前，你的身體會告訴你要或不要。",
+    signature:"滿足感"},
+  mg:{label:"顯示生產者",cls:"b-mg",
+    aura:"開放包覆又帶著爆發力的能量場，節奏比一般生產者更快",
+    gift:"能量多工、學得快、能跳步驟直接抵達",
+    key:"一樣先『回應』，但行動前多一步『告知』身邊的人，減少被擋、被誤會",
+    sign:"對了滿足，被卡住或沒被知會就挫敗、進而憤怒",
+    deep:"你是加速版的生產者：一樣有薦骨馬達，但多了『快、跳步驟、多工』的天賦。你能同時燃燒好幾把火，也能直接抄捷徑抵達終點。你的兩步驟是『回應→告知』——先確認身體真的想要，行動前再跟會被影響的人說一聲。少了『告知』這一步，你容易被擋、被誤會，累積挫敗甚至憤怒。",
+    signature:"滿足感（也帶著平靜）"},
+  proj:{label:"投射者",cls:"b-proj",
+    aura:"聚焦而穿透的能量場，能一眼看進別人的本質、看見別人怎麼運作",
+    gift:"是天生的引導者與看見者，能給出精準的指引",
+    key:"能量不像生產者持久，要『等待被邀請與被看見』，在重要的事（關係、工作、住哪）尤其重要",
+    sign:"被認可就成功、發光；不被看見、硬撐就苦澀",
+    deep:"你是這世界的『引導者』，約佔兩成。你沒有固定的馬達，能量不像生產者持久——這不是缺陷，是設計。你的天賦是能一眼看穿別人、看見系統怎麼運作、給出精準的指引。但這份天賦要在『被邀請、被認可』時才被接得住；主動塞給沒問你的人，往往換來冷淡或抗拒，累積成苦澀。學會等待對的邀請、保護自己的能量、只在被需要時給予，你會活得既輕鬆又閃亮。",
+    signature:"成功感"},
+  mani:{label:"顯示者",cls:"b-mani",
+    aura:"封閉而推進的能量場，天生帶著『發起』的力量，別人會不自覺被推動或想擋",
+    gift:"能無中生有地啟動事情，是點火的人",
+    key:"行動前『告知』會受影響的人——不是討許可，是讓對方有心理準備，阻力就會少很多",
+    sign:"順暢就平靜，被控制、被擋就憤怒",
+    deep:"你是這世界的『發起者』，人口最少（約一成）。你有一種封閉、往外推的能量場——天生能無中生有地啟動事情，是點火的人。別人會不自覺被你推動，或反過來想擋你、控制你，那會激起你的憤怒。你的自由來自一個小動作：行動前『告知』會被影響的人。這不是討許可，是讓對方有心理準備，阻力就會消融，你也能保有最珍貴的東西——不被打擾地做自己想做的事。",
+    signature:"平靜"},
+};
+const AUTH={
+  sacral:{label:"薦骨權威",how:"答案在當下的身體反應——喉頭的『嗯哼／嗯嗯』。適合用是非題來問，讓身體回答，別逼他用大腦講理由",
+    deep:"你的真理住在肚子裡（薦骨），而且只在『當下』說話。它透過一種近乎聲音的身體反應回答你——想要時是上揚的『嗯哼』，不要時是下沉的『嗯嗯』。它不會解釋理由（理由是大腦事後編的），也不能預約——它只回應此刻。所以最好的問法是別人給你是非題，或你自己一件件去碰、感覺身體亮不亮。"},
+  emotional:{label:"情緒權威",how:"當下沒有真相。要讓情緒的浪走完——重要決定至少睡過一晚、隔一段時間再確認，清明時的答案才算數",
+    deep:"你的真理住在情緒的『波』裡，而且——這是最關鍵的一句——『當下沒有真相』。你的感受像海浪，會高、會低，同一件事你在浪頭上說好、在浪底說不，都不是最終答案。你需要『時間』：讓浪走過幾輪，在相對清明、不高不低的中間點，答案才浮現。所以重要的事別當場決定，睡一晚、隔幾天再確認。這不是猶豫，是你正確的做決定方式。"},
+  splenic:{label:"直覺權威",how:"脾臟第一下、輕聲、只講一次的直覺。要在安靜、放鬆時才聽得到，不會重複提醒",
+    deep:"你的真理住在脾臟——那是最古老的生存直覺，關乎當下的安全與健康。它的特徵是：第一下、很輕、只講一次，不會像大腦那樣反覆嘮叨。它常常沒有理由，卻很準（『我就是覺得不要』）。你的功課是在安靜、放鬆時聽見它，並且『相信第一個直覺』——因為它不會重複第二次給你。"},
+};
+const PROFILE={
+  "3/5":{title:"試錯者 × 異端（殉道者/救世主）",
+    p:"3 線讓你透過『親身碰撞』學會——跌倒、修正、再試，是你長智慧的方式，不是失敗。5 線讓你活在強烈的『投射場』中：別人容易把期待、想像投射在你身上（把你當救星，或誤解你）。你實用、能解決問題，但要小心不被別人的投射綁架。你的力量：從真實經驗提煉出來的智慧，加上在關鍵時刻救場的能力。"},
+  "6/2":{title:"人生榜樣 × 隱士（天生的角色典範）",
+    p:"6 線的人生有三段：約 30 歲前像 3 線一樣體驗、跌撞、蒐集經驗；30–50 歲上『屋頂』抽離觀察、療傷、看清什麼值得；50 歲後走下屋頂，活成一個榜樣。2 線讓你有『天生的才華』，卻需要獨處充電，且要被別人看見、召喚，才願意展現。別把想獨處誤會成孤僻——那是你回血與醞釀的方式。"},
+  "1/3":{title:"研究者 × 試錯者（扎根的專家）",
+    p:"1 線需要『地基』——先把事情弄懂、覺得安全，才敢往前；你天生會鑽研、想成為懂的人。3 線再用親身試錯去驗證、修正。你是『鑽得深又敢碰』的組合，會透過研究＋實驗建立自己的權威。你的挑戰：允許自己還沒完全準備好就去試，因為經驗會補上書本沒有的那一塊。"},
+  "5/1":{title:"異端 × 研究者（被託付期待的實用者）",
+    p:"5 線讓你活在最強的投射場——別人很容易把『你應該能拯救/搞定』的期待放在你身上，你也常被推上解決問題的位置。1 線讓你需要知識底與安全感，會先把事情研究透。你務實、能救火、能扛，但要清醒地分辨：哪些期待是你的，哪些是別人投射給你的。守住界線，你的實用天賦才不會變成過度負荷。"},
+};
+
+/* 2026 生活運用月曆：整體月意 + 各類型 12 個月練習 */
+const MONTHS=["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+const COLLECTIVE=[
+ {t:"重新開始・別急著衝",p:"新的一年，整體能量在『重啟』。人類圖的太陽年循環也在一月下旬前後翻新——把一月當『醞釀』而非『衝刺』：先感覺方向，別急著訂一堆目標。"},
+ {t:"確認方向・聽身體",p:"能量開始聚攏。這個月適合校準——問自己：現在走的路，讓我有力量還是消耗？各自回到自己的內在權威來確認。"},
+ {t:"春天萌動・行動前先對頻",p:"萬物生發，想動的衝動變強。提醒全家：動之前先各自對頻（薦骨回應/情緒沉澱/直覺一閃/顯示者告知），別被『大家都在動』推著走。"},
+ {t:"落地・把想法做成一步",p:"適合把二三月的感覺，落成具體的一小步。重點不是做很多，是做『對的那一件』。"},
+ {t:"關係月・練習被看見與看見",p:"人際能量升溫。投射者這個月尤其要練『被邀請才給』，生產者則練『用問句連結』。家人之間多一點『我看見你』。"},
+ {t:"盤整・半年回顧",p:"上半年過半，適合回看：哪些選擇帶來滿足/成功/平靜？哪些帶來挫敗/苦澀/憤怒？那些『非自己』的訊號，是最好的導航。"},
+ {t:"仲夏・好好休息回血",p:"能量最需要『補』的月份。全家都允許自己深度休息——尤其投射者與顯示者，休息不是懶，是設計需要。"},
+ {t:"收整・去蕪存菁",p:"適合放下不對的、留下對的。問身體：哪些事我其實一直在硬撐？鬆手，能量才回得來。"},
+ {t:"收成・讓成果被看見",p:"秋收的能量。允許自己享受成果、被認可。投射者與 6 線的人，這個月特別容易被『看見』——接住它。"},
+ {t:"回到自己・別背別人的期待",p:"適合檢查界線：我是不是在扛不屬於我的期待？（5 線的人尤其。）把別人的投射還回去，你會輕很多。"},
+ {t:"沉澱・情緒與方向的整理",p:"年末將近，情緒容易起伏。情緒權威的人這個月別急著下大決定，讓浪走完再說。多給彼此一點空間。"},
+ {t:"盤點・為明年留下對的種子",p:"回顧整年：哪些『回應/邀請/告知/沉澱』帶你到對的地方？把讓你發光的事留下，成為明年的種子。"},
+];
+const PRACTICE={
+ gen:[
+  "回應新的一年——別急著訂目標，等生活把『值得投入的事』帶到面前，用身體的『要』回應。",
+  "檢查能量：現在做的事讓你滿足還是挫敗？挫敗＝該調整方向的訊號。",
+  "春天想動起來，先問薦骨：這件事我『真的想做』嗎？想，才做。",
+  "練習用『回應』而非硬撐發起——讓事情先來到你，你會更省力。",
+  "把能量花在讓你『愈做愈起勁』的事，那是你天生的軌道。",
+  "練習說『不』：薦骨沒回應的事，勉強做只會累。",
+  "中場好好休息、睡飽——薦骨要每天用到滿再睡，才會回血。",
+  "半年回顧：哪些『回應』對了？跟著滿足感的線索走。",
+  "秋天收成，允許自己享受成果、被看見。",
+  "別把『忙』當價值——真正的滿足不是做很多，是做對的。",
+  "傾聽身體的疲累，那是薦骨在說『這裡不對』。",
+  "盤點滿足感 vs 挫敗感，為明年留下讓你發光的事。"],
+ mg:[
+  "回應新年的召喚，但行動前多一步——先告知身邊的人，減少阻力。",
+  "你能量多工，但別什麼都攬。回應『真的想要』的，其他放手。",
+  "快是你的天賦；但跳步驟前，先確認薦骨有『要』。",
+  "練習『回應→告知→再行動』，別讓家人措手不及。",
+  "找到能讓你全速前進的事，那是你的燃料。",
+  "被卡住時別硬撐，那是挫敗訊號——換條路。",
+  "休息也要『告知』：讓家人知道你在充電，不是冷落。",
+  "回顧：哪些事你跳得漂亮？哪些其實不該接？",
+  "收成期，讓成果被看見，也謝謝一路配合你的人。",
+  "多工不等於分心——回到一次一件讓你有勁的事。",
+  "憤怒/挫敗浮現時先看：是不是沒被知會、或被擋住了？",
+  "盤點這年，把『快而對』的經驗留下。"],
+ proj:[
+  "新年不是衝刺，是等對的邀請。先養好能量，別跟著大家設一堆目標。",
+  "練習『被看見才給』——別主動把建議塞給沒問的人。",
+  "找到欣賞你的人與圈子，你的天賦在被邀請時才發光。",
+  "累就休息，別用生產者的標準逼自己，你的能量本來就該省著用。",
+  "把注意力放在『你看見了什麼』——你的洞察是禮物，等對的人來取。",
+  "苦澀浮現時問自己：我是不是在硬撐、在做沒被邀請的事？",
+  "深度休息月。投射者需要獨處放電，別有罪惡感。",
+  "半年回顧：哪些邀請讓你發光？哪些消耗你？",
+  "讓自己被正式邀請、被認可——值得等，也值得挑。",
+  "練習說出你的觀察，但只對『問你』的人。",
+  "別接下不屬於你的責任，那會累積苦澀。",
+  "回到自己：這一年我有被真正看見嗎？調整明年的圈子。"],
+ mani:[
+  "新的一年你天生要發起——但行動前『告知』會受影響的人，路會更順。",
+  "做決定前讓情緒的浪走完（你是情緒權威），別在浪頭上拍板。",
+  "想啟動什麼就去——只要先說一聲，不是求許可，是給對方準備。",
+  "感到被控制/被擋時，那是憤怒前兆——回到『先告知』的節奏。",
+  "保護你的獨立空間，你需要不被打擾地推進。",
+  "大事等情緒清明再決定，衝動發起容易後悔。",
+  "休息＝斷線，你需要一個人的時間充電。",
+  "回顧：哪些你發起的事順利？多半是有先告知的那些。",
+  "讓你點的火被看見、被延續——找對的人接手。",
+  "別壓抑想發起的衝動，但用『告知』把它變成祝福而非衝突。",
+  "情緒低谷時不做承諾，等浪過去。",
+  "盤點這年你啟動了什麼，為明年的火種鋪路。"],
+};
+
+/* ============== 狀態 ============== */
+const scene=new Set();
+const tray=document.getElementById('tray');
+const field=document.getElementById('field');
+const chips=document.getElementById('chips');
+const hint=document.getElementById('hint');
+const analysis=document.getElementById('analysis');
+const clearBtn=document.getElementById('clearBtn');
+
+ORDER.forEach(id=>{
+  const p=PEOPLE[id];
+  const el=document.createElement('div');
+  el.className='person'; el.dataset.id=id;
+  el.innerHTML=`
+    <div class="info-dot" data-info="${id}">ⓘ</div>
+    <div class="ava" style="background:${p.color}">${p.emoji}</div>
+    <div class="nm">${p.name}</div>
+    <div class="rl">${p.role}</div>
+    <span class="tbadge ${TYPE[p.type].cls}">${TYPE[p.type].label}</span>
+    <div class="seehint">點 ⓘ 深入分析</div>`;
+  tray.appendChild(el);
+});
+
+/* ---- 拖曳＋點擊 ---- */
+let drag=null;
+tray.addEventListener('pointerdown',e=>{
+  const dot=e.target.closest('[data-info]');
+  if(dot){ openModal(dot.dataset.info); return; }
+  const card=e.target.closest('.person');
+  if(!card) return;
+  drag={id:card.dataset.id,card,ghost:null,moved:false,sx:e.clientX,sy:e.clientY};
+  card.setPointerCapture(e.pointerId);
+  card.classList.add('dragging');
+});
+tray.addEventListener('pointermove',e=>{
+  if(!drag) return;
+  if(!drag.moved && Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)<8) return;
+  drag.moved=true;
+  if(!drag.ghost){
+    const g=drag.card.cloneNode(true);
+    g.style.cssText='position:fixed;pointer-events:none;z-index:99;width:118px;opacity:.9;transform:scale(.9);box-shadow:0 14px 30px rgba(0,0,0,.25)';
+    document.body.appendChild(g); drag.ghost=g;
+  }
+  drag.ghost.style.left=(e.clientX-59)+'px';
+  drag.ghost.style.top=(e.clientY-50)+'px';
+  const r=field.getBoundingClientRect();
+  field.classList.toggle('over', e.clientX>r.left&&e.clientX<r.right&&e.clientY>r.top&&e.clientY<r.bottom);
+});
+tray.addEventListener('pointerup',e=>{
+  if(!drag) return;
+  drag.card.classList.remove('dragging');
+  if(drag.ghost) drag.ghost.remove();
+  field.classList.remove('over');
+  if(!drag.moved){ toggle(drag.id); }
+  else{
+    const r=field.getBoundingClientRect();
+    if(e.clientX>r.left&&e.clientX<r.right&&e.clientY>r.top&&e.clientY<r.bottom) add(drag.id);
+  }
+  drag=null;
+});
+function add(id){ scene.add(id); render(); }
+function toggle(id){ scene.has(id)?scene.delete(id):scene.add(id); render(); }
+clearBtn.onclick=()=>{ scene.clear(); render(); };
+
+/* presets */
+const PRESETS=[
+  {label:"媽 × 爸（Krisana × John）",ids:["krisana","john"]},
+  {label:"我 · Yuna · Rio",ids:["milliya","yuna","rio"]},
+  {label:"我 × Yuna（母女）",ids:["milliya","yuna"]},
+  {label:"我 × Rio（母子）",ids:["milliya","rio"]},
+  {label:"我 × Fumi（共親職）",ids:["milliya","fumi"]},
+  {label:"三姊妹（Kayla·我·Yiyin）",ids:["kayla","milliya","yiyin"]},
+  {label:"Yiyin × 子芯（母女）",ids:["yiyin","zixin"]},
+  {label:"三個表兄妹（Rio·Yuna·子芯）",ids:["rio","yuna","zixin"]},
+  {label:"原生家庭四口",ids:["john","krisana","kayla","milliya"]},
+  {label:"全家一起",ids:ORDER.slice()},
+];
+const presetsBox=document.getElementById('presets');
+PRESETS.forEach(pr=>{
+  const b=document.createElement('button'); b.className='preset'; b.textContent=pr.label;
+  b.onclick=()=>{ scene.clear(); pr.ids.forEach(i=>scene.add(i)); render(); document.getElementById('field-sec').scrollIntoView({behavior:'smooth',block:'start'}); };
+  presetsBox.appendChild(b);
+});
+
+/* ============== 關係場渲染 ============== */
+function render(){
+  document.querySelectorAll('.person').forEach(el=>el.classList.toggle('picked',scene.has(el.dataset.id)));
+  chips.innerHTML='';
+  const ids=ORDER.filter(i=>scene.has(i));
+  hint.style.display=ids.length?'none':'block';
+  clearBtn.style.display=ids.length?'block':'none';
+  ids.forEach(id=>{
+    const p=PEOPLE[id];
+    const c=document.createElement('div'); c.className='chip';
+    c.innerHTML=`<span class="ava" style="background:${p.color}">${p.emoji}</span>${p.name}<span class="x" data-x="${id}">×</span>`;
+    chips.appendChild(c);
+  });
+  chips.querySelectorAll('[data-x]').forEach(x=>x.onclick=()=>{scene.delete(x.dataset.x);render();});
+  renderAnalysis(ids);
+}
+function renderAnalysis(ids){
+  analysis.innerHTML='';
+  if(ids.length===0) return;
+  if(ids.length===1){ analysis.innerHTML=oneCard(ids[0]); return; }
+  const cur=curated(ids); if(cur) analysis.insertAdjacentHTML('beforeend',cur);
+  analysis.insertAdjacentHTML('beforeend', energyCard(ids));
+  analysis.insertAdjacentHTML('beforeend', rhythmCard(ids));
+  analysis.insertAdjacentHTML('beforeend', remindCard(ids));
+  if(scene.has('milliya')) analysis.insertAdjacentHTML('beforeend', milliyaCard(ids));
+}
+function oneCard(id){
+  const p=PEOPLE[id], t=TYPE[p.type], a=AUTH[p.authority];
+  return `<div class="a-card"><h3><span class="ic">${p.emoji}</span>${p.name} · ${t.label} · ${p.profile}</h3>
+    <p><span class="tag">${a.label}</span><span class="tag">策略：${p.strategy}</span><span class="tag">非自己：${p.notSelf}</span></p>
+    <p>${t.gift}。${t.key}。</p>
+    <p class="small">想看完整深入分析，點卡片上的 ⓘ。再把第二個人加進來，就會顯示他們在一起的關係場。</p></div>`;
+}
+function energyCard(ids){
+  const c=count(ids); let body=''; const motors=c.gen+c.mg;
+  if(motors&&c.proj) body+=`<li>場上有 <b>${motors} 位生產者／顯示生產者</b>提供源源不絕的能量，也有 <b>${c.proj} 位投射者</b>。生產者的忙碌會把投射者的能量場充飽，但投射者容易<b>接收並放大</b>這些能量——一時很high、事後特別累。投射者需要獨處放電，別被『大家都在動』捲著硬撐。</li>`;
+  if(c.mani) body+=`<li>場上有<b>顯示者</b>（發起的人）。他天生想點火、想啟動，其他人容易不自覺想擋或被推著走。給他<b>先說一聲</b>的空間，衝突就少一半。</li>`;
+  if(motors>=2) body+=`<li><b>${motors} 個馬達</b>在一起，很能『一起把事做出來』——一起煮飯、收拾、玩，比坐著講道理更順。用<b>行動</b>連結，不要用<b>說教</b>連結。</li>`;
+  if(c.proj>=2) body+=`<li><b>${c.proj} 位投射者</b>在一起，會彼此<b>看見、彼此懂</b>，很療癒；但都在等邀請、可能都不主動——需要有人先開口說『我想聽你的』。</li>`;
+  if(!body) body='<li>這個組合的能量場溫和，關鍵在下面的決策節奏與提醒。</li>';
+  return card("🌀","這個組合的能量場",`<ul>${body}</ul>`);
+}
+function rhythmCard(ids){
+  const c=count(ids); let body='';
+  if(c.emo>=1){ const who=ids.filter(i=>PEOPLE[i].authority==='emotional').map(i=>PEOPLE[i].name).join('、');
+    body+=`<li>場上有<b>情緒權威</b>的人（${who}）。意思是：<b>當下都不該定案</b>。開心時說好、生氣時說不都不算數。重要的事要<b>睡過一晚、等情緒的浪退了再確認</b>。急著要答案只會逼出反悔。</li>`;}
+  if(c.sacral>=1){ const who=ids.filter(i=>PEOPLE[i].authority==='sacral').map(i=>PEOPLE[i].name).join('、');
+    body+=`<li><b>薦骨權威</b>的人（${who}）答案在<b>當下的身體</b>：用是非題問（「你想去嗎？」而非「你覺得呢？」），聽第一聲的『嗯哼／嗯嗯』，別逼他們解釋理由。</li>`;}
+  if(c.splen>=1){ const who=ids.filter(i=>PEOPLE[i].authority==='splenic').map(i=>PEOPLE[i].name).join('、');
+    body+=`<li><b>直覺權威</b>的人（${who}）——脾臟的第一下直覺、輕聲、只講一次，要在安靜時聽。他們說『不要』常沒理由但很準，別要求說明。</li>`;}
+  if(c.emo>=1&&c.sacral>=1) body+=`<li><b>節奏差異</b>：薦骨的人當下就有答案，情緒的人需要時間。快的別催慢的，慢的記得回覆快的。約好『這件事我明天給你答案』就兩全。</li>`;
+  return card("⏳","決策節奏（怎麼一起做決定）",`<ul>${body}</ul>`);
+}
+function remindCard(ids){
+  const c=count(ids); let li=[];
+  ids.forEach(i=>{ const p=PEOPLE[i];
+    if(p.type==='proj') li.push(`<b>${p.name}（投射者）</b>：主動<b>邀請</b>他、具體<b>說出他哪裡好</b>。不是懶，是能量本來就不持久；被看見才發光，被當生產者使喚會苦澀退縮。`);
+    if(p.type==='mani') li.push(`<b>${p.name}（顯示者）</b>：別控制、別替他決定。希望他配合，就<b>先讓他知道全貌</b>；被尊重就平和，被擋就憤怒。`);});
+  const themes=[...new Set(ids.map(i=>PEOPLE[i].notSelf))];
+  li.push(`這個組合的<b>情緒警報器</b>是：${themes.join('、')}。當家裡出現這些感覺，通常不是誰的錯，而是有人<b>沒照自己的策略在走</b>——回到各自的節奏，氣氛就會鬆開。`);
+  const twos=ids.filter(i=>PEOPLE[i].profile.startsWith('6')||PEOPLE[i].profile.endsWith('/2'));
+  if(twos.length>=2) li.push(`場上有多位帶 <b>2 線（隱士）</b>的人——都需要<b>獨處充電</b>，別把『各自待著』誤會成冷淡，那是他們回血的方式。`);
+  return card("🤍","相處提醒",`<ul>${li.map(x=>`<li>${x}</li>`).join('')}</ul>`);
+}
+function milliyaCard(ids){
+  const others=ids.filter(i=>i!=='milliya'); const c=count(others); let msg='';
+  if(c.proj) msg=`你自己是<b>生產者</b>（用回應、靠身體的『要／不要』過日子）。和投射者（像 Yuna、Yiyin、子芯）在一起，最容易犯的好意錯誤，是用自己的標準要求他們『多做一點、撐一下』。他們做不到不是不夠愛你，是能量結構不同。你能給的最好的愛，是<b>主動邀請＋說出你看見他們的好</b>。`;
+  else if(c.emo) msg=`你是<b>薦骨權威</b>，當下就知道要或不要；但和情緒權威的家人（爸媽、Kayla、Fumi）互動，記得<b>給他們時間</b>。你想要明快的答案，他們需要一個晚上。把『現在就要講清楚』換成『我們明天再說』，會少很多硬碰硬。`;
+  else if(c.mani) msg=`和<b>顯示者</b>（爸爸 John）相處，你的薦骨會很想『回應、把事做好』，但他要的往往不是你幫他做，而是<b>被告知、被尊重他自己來</b>。少一點『我來』，多一點『你想怎麼做，跟我說一聲就好』。`;
+  else msg=`你是<b>生產者 3/5</b>：3 線讓你靠親身試錯長智慧（跌倒不是失敗），5 線讓別人容易把期待投射到你身上。在這個組合裡，回到你的策略——<b>等待回應</b>，別勉強發起。`;
+  return `<div class="a-card milliya-note"><h3><span class="ic">🌙</span>給 Milliya 的一句話</h3><p>${msg}</p></div>`;
+}
+function card(ic,title,body){ return `<div class="a-card"><h3><span class="ic">${ic}</span>${title}</h3>${body}</div>`; }
+function count(ids){ const c={gen:0,mg:0,proj:0,mani:0,emo:0,sacral:0,splen:0};
+  ids.forEach(i=>{const p=PEOPLE[i]; c[p.type]++;
+    if(p.authority==='emotional')c.emo++; if(p.authority==='sacral')c.sacral++; if(p.authority==='splenic')c.splen++;});
+  return c; }
+
+/* ============== 精選手寫解讀 ============== */
+function curated(ids){ const k=ids.slice().sort().join('+'); const M=CURATED[k];
+  return M?`<div class="a-card curated"><h3><span class="ic">✦</span>${M.title}</h3>${M.body}</div>`:null; }
+const CURATED={
+  "john+krisana":{title:"媽 × 爸 · Krisana × John",body:`
+    <p>這是一對<b>顯示生產者 × 顯示者</b>、而且<b>兩個都是情緒權威</b>的組合。</p><ul>
+      <li><b>兩個情緒體＝情緒會共振。</b>一個人的浪會把另一個帶上去。吵架當下的話別當真——那是浪頭，不是真相。大事一定要<b>各自睡過一晚</b>再談。</li>
+      <li><b>John 是顯示者，策略是「告知」。</b>他天生要自己啟動；被替他決定或攔他，他會<b>憤怒</b>。Krisana 是顯生，要先「回應」再「告知」。兩人都記得『行動前先說一聲』，衝突會大幅減少。</li>
+      <li><b>John 1/3：</b>要先弄懂、地基穩才敢動，又靠親身試錯。他不是固執，是要自己驗證過才信。</li>
+      <li><b>Krisana 5/1：</b>別人很容易把期待投射在她身上（覺得她該搞定一切），她背了很多投射，久了會累。</li>
+      <li><b>給你（Milliya）：</b>他們的爭執多半不是不愛，是兩個情緒權威在浪上對話＋顯示者要自主。你不用當裁判，只要記得——他們冷靜後的版本，才是真心話。</li></ul>`},
+  "milliya+rio+yuna":{title:"我 · Rio · Yuna（一打二的能量真相）",body:`
+    <p>你每天的核心場：<b>兩個薦骨生產者（你＋Rio）＋一個投射者（Yuna）</b>。</p><ul>
+      <li><b>你和 Rio 是同一種引擎。</b>都靠身體回應、用滿足／挫敗當指南針。和 Rio 最順的是<b>一起動</b>＋<b>用是非題問他</b>，少用命令。</li>
+      <li><b>Yuna 夾在兩個馬達中間最需要保護。</b>你和 Rio 的能量場一直運轉，Yuna 會被充飽、跟著嗨，但電池<b>撐不了那麼久</b>，事後常突然崩、鬧、黏人——那不是番，是<b>能量過載＋放電</b>。</li>
+      <li><b>Yuna 要「被邀請」和「被看見」。</b>別用『你看哥哥都可以』比較，那會踩到她的苦澀。改成<b>單獨邀請</b>＋<b>具體稱讚</b>，她一被看見就發光。</li>
+      <li><b>節奏建議：</b>白天讓兩個生產者盡情放電，<b>幫 Yuna 留一段安靜時間</b>，她情緒會穩很多。</li>
+      <li><b>給你自己：</b>你也是生產者，會想把三個都顧好、一直動；但你的策略是<b>等待回應</b>——讓需求先來到再回應，你會比較不累。</li></ul>`},
+  "milliya+yuna":{title:"我 × Yuna · 生產者媽 × 投射者女兒",body:`<ul>
+      <li>你們是<b>不同引擎</b>的母女。你（生產者）能量持久；Yuna（投射者）能量像電池，會用完、需要充。</li>
+      <li>最重要的一句：<b>Yuna 不是不夠努力，她是投射者。</b>用生產者標準要求她『再撐一下』，會累積<b>苦澀</b>，長大變討好或退縮。</li>
+      <li>她的天賦是<b>看見別人</b>——會講出很精準的觀察。回應她：『你怎麼知道的？你好會看喔』，這是在餵養天賦。</li>
+      <li>配方：<b>邀請＞命令，認可＞比較，獨處＞硬湊。</b>她 6/2，需要獨處與空間，會用成熟回報你。</li></ul>`},
+  "milliya+rio":{title:"我 × Rio · 兩個薦骨生產者",body:`<ul>
+      <li>同一種引擎，最容易懂彼此、也最容易卡在一起——兩個都有滿足／挫敗開關。</li>
+      <li>金鑰是<b>是非題</b>：把「你想吃什麼？」換成「你想吃麵嗎？」，讓他薦骨用『嗯哼／嗯嗯』回答。開放式問題會讓他當機。</li>
+      <li>用<b>一起做</b>連結：一起整理、運動、完成一件小事，比講道理更靠近他。</li>
+      <li>他 6/2 三分人，有時需要別人/環境幫他把狀態接起來，獨處和玩伴都需要。允許他慢慢試錯（正是 6 線前段體驗期）。</li></ul>`},
+  "fumi+milliya":{title:"我 × Fumi · 共親職的節奏",body:`<ul>
+      <li>你是生產者、Fumi 是顯示生產者，<b>引擎相近</b>，都靠回應行動——利於分工把事做完。</li>
+      <li>關鍵差異：<b>Fumi 情緒權威、你薦骨權威。</b>你當下有答案，他需要時間。談孩子的大事<b>別當場逼他表態</b>，給『你想一下，明天說』，答案穩定得多。</li>
+      <li>他 6/2、非自己是挫敗/憤怒：被卡住或沒被知會最容易上火。<b>行程、決定先讓他知道</b>。</li></ul>`},
+  "kayla+milliya+yiyin":{title:"三姊妹 · Kayla · 我 · Yiyin",body:`<ul>
+      <li><b>Kayla（生產者·情緒）× 你（生產者·薦骨）× Yiyin（投射者·直覺）</b>——兩個引擎＋一個看見者。</li>
+      <li><b>Yiyin 是投射者</b>，最需要被<b>邀請發言</b>。她話不多但一開口很準（直覺）。主動問她『你怎麼看？』會有意想不到的洞見。</li>
+      <li><b>Kayla 情緒權威</b>：她的『好』需要時間，別在她情緒上頭時敲定家族事。你薦骨快，記得等她。</li>
+      <li>三個都帶 6/2 線——都需要<b>獨處</b>。感情好不代表要黏在一起，各自有空間反而更長久。</li></ul>`},
+  "yiyin+zixin":{title:"Yiyin × 子芯 · 投射者母女",body:`<ul>
+      <li>一對<b>都是投射者</b>的母女——彼此天生會<b>看見、看懂</b>，但也可能<b>都在等被邀請、都不主動開口</b>。要練習有人先說『我想聽你的』。</li>
+      <li>關鍵差異在權威：<b>Yiyin 直覺型</b>（第一下、只講一次），<b>子芯 情緒型</b>（要等浪走完）。所以子芯做決定<b>比媽媽慢</b>——Yiyin 別用自己的直覺速度催她，要給子芯時間。</li>
+      <li>兩人都不是靠『硬撐做很多』發光的孩子/大人，是靠<b>被認可、被邀請</b>。母女之間多一點『我看見你』，少一點『你應該多做點』。</li>
+      <li>子芯 3/5＋情緒，容易被投射期待、又被要求當下給答案——媽媽最能保護她的，是<b>不逼她馬上決定、允許她試錯</b>。</li></ul>`},
+  "rio+yuna+zixin":{title:"三個孩子 · Rio · Yuna · 子芯",body:`<ul>
+      <li><b>Rio（生產者馬達）× Yuna（投射者·直覺）× 子芯（投射者·情緒）</b>：一個能量發電機＋兩個看見者。</li>
+      <li>玩在一起時，<b>Rio 的薦骨能量會帶動全場</b>，兩個投射者妹妹會被充飽、玩很high——但她們<b>會比 Rio 早累、早崩</b>。大人要留意：不是她們鬧，是能量到頂了，該休息。</li>
+      <li>兩個投射者妹妹需要<b>被邀請</b>加入、<b>被稱讚</b>看到的細節；別讓她們一直追著 Rio 的節奏跑。</li>
+      <li>子芯是情緒型，起伏來得比 Yuna（直覺型）<b>更需要時間平復</b>——她哭鬧時別急著要她『好了沒』，陪她等浪過。</li></ul>`},
+};
+
+/* ============== 深入分析 Modal ============== */
+const modalBg=document.getElementById('modalBg'), modal=document.getElementById('modal');
+function openModal(id){
+  const p=PEOPLE[id], t=TYPE[p.type], a=AUTH[p.authority], pr=PROFILE[p.profile];
+  modal.innerHTML=`
+    <div class="modal-hd">
+      <div class="ava" style="background:${p.color};width:48px;height:48px">${p.emoji}</div>
+      <div><div class="nm">${p.name}</div><div class="rl">${p.role}</div></div>
+      <div class="close" id="mClose">×</div>
+    </div>
+    <div class="modal-bd">
+      <img src="${p.img}" alt="${p.name} 人類圖">
+      <dl class="kv">
+        <dt>類型</dt><dd>${t.label}</dd>
+        <dt>人生角色</dt><dd>${p.profile} ｜ ${pr?pr.title:""}</dd>
+        <dt>定義</dt><dd>${p.definition}</dd>
+        <dt>內在權威</dt><dd>${a.label}</dd>
+        <dt>策略</dt><dd>${p.strategy}</dd>
+        <dt>真我訊號 / 非自己</dt><dd>${t.signature} ／ ${p.notSelf}</dd>
+        <dt>輪迴交叉</dt><dd>${p.cross}</dd>
+      </dl>
+
+      <div class="sec"><h4>🌿 你的能量本質（${t.label}）</h4><p>${t.deep}</p>
+        <p><span class="lbl">能量場：</span>${t.aura}。</p></div>
+
+      <div class="sec"><h4>🧭 你怎麼做決定（${a.label}）</h4><p>${a.deep}</p>
+        <p><span class="lbl">實用：</span>${a.how}。</p></div>
+
+      <div class="sec"><h4>🎭 你的人生角色 ${p.profile}</h4>
+        <p><span class="lbl">${pr?pr.title:""}</span></p><p>${pr?pr.p:""}</p></div>
+
+      <div class="sec"><h4>✦ 你的人生主題（輪迴交叉）</h4>
+        <p><span class="lbl">${p.cross}</span></p><p>${p.crossMeaning}</p>
+        <p class="small">＊輪迴交叉的意涵屬通俗解讀，供參考。</p></div>
+
+      <div class="sec"><h4>🌗 真我 vs 非自己的訊號</h4>
+        <p>當你活在自己的設計裡，會感覺到<b>${t.signature}</b>；當你偏離（做了不對的決定、勉強自己），會浮現<b>${p.notSelf}</b>。把<b>${p.notSelf}</b>當成導航燈——它一亮，就回到你的策略「${p.strategy}」與權威。</p></div>
+
+      <div class="pnote"><h4>💛 給${p.name}的話</h4><p>${p.personal}</p></div>
+
+      <p class="small" style="margin-top:16px">＊以上根據圖卡可靠讀到的欄位（類型/權威/角色/交叉）＋人類圖經典原理整理，屬能量傾向參考，非命定。</p>
+    </div>`;
+  modalBg.classList.add('on');
+  document.getElementById('mClose').onclick=closeModal;
+  modal.scrollTop=0;
+}
+function closeModal(){ modalBg.classList.remove('on'); }
+modalBg.addEventListener('click',e=>{ if(e.target===modalBg) closeModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+
+/* ============== 2026 流年月曆 ============== */
+const calMonths=document.getElementById('calMonths');
+const calCollective=document.getElementById('calCollective');
+const calGrid=document.getElementById('calGrid');
+const CURRENT_MONTH=7; // 2026-07
+let selMonth=CURRENT_MONTH;
+MONTHS.forEach((m,i)=>{
+  const b=document.createElement('button'); b.className='mbtn';
+  b.innerHTML=`${m}${i+1===CURRENT_MONTH?'<span class="now">本月</span>':''}`;
+  b.onclick=()=>{ selMonth=i+1; drawCal(); };
+  calMonths.appendChild(b);
+});
+function drawCal(){
+  [...calMonths.children].forEach((b,i)=>b.classList.toggle('on',i+1===selMonth));
+  const idx=selMonth-1, col=COLLECTIVE[idx];
+  calCollective.innerHTML=`<h3>2026 · ${MONTHS[idx]}　整體能量：${col.t}</h3><p>${col.p}</p>`;
+  calGrid.innerHTML=ORDER.map(id=>{
+    const p=PEOPLE[id];
+    return `<div class="pmonth">
+      <div class="ph"><span class="ava" style="background:${p.color}">${p.emoji}</span>${p.name}
+        <small>${TYPE[p.type].label}·${p.profile}</small></div>
+      <p>${PRACTICE[p.type][idx]}</p>
+      <div class="th">留意訊號：${p.notSelf}亮起＝回到「${p.strategy}」</div>
+    </div>`;
+  }).join('');
+}
+drawCal();
+
+render();
+</script>
+</body>
+</html>
