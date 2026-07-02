@@ -68,6 +68,15 @@
   .savebar button:hover{ background:var(--gold); color:#fff }
   .savebar button:disabled{ opacity:.55; cursor:default }
   .savebar.inmodal{ margin:20px 0 2px; border-top:1px solid var(--line); padding-top:18px }
+  .export-frame{ position:fixed; left:-10000px; top:0; width:800px; box-sizing:border-box; padding:34px 34px 22px;
+    background:linear-gradient(180deg,#fbf7f0 0%,#f3e9d8 100%); color:var(--ink) }
+  .export-frame .ef-head{ text-align:center; margin-bottom:22px }
+  .ef-brand{ font-size:14px; color:var(--gold-d); letter-spacing:3px; font-weight:700 }
+  .ef-title{ font-size:27px; font-weight:700; margin:9px 0 6px; letter-spacing:1px; color:var(--ink) }
+  .ef-sub{ font-size:16px; color:var(--ink-soft) }
+  .export-frame .ef-head::after{ content:""; display:block; width:64px; height:3px; background:var(--gold); margin:16px auto 0; border-radius:2px }
+  .ef-foot{ text-align:center; font-size:12px; color:var(--ink-soft); margin-top:20px; border-top:1px solid var(--line); padding-top:13px; line-height:1.7 }
+  .export-frame .a-card{ animation:none }
   .analysis{ margin-top:22px }
   .a-card{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px 22px; margin-bottom:16px; box-shadow:var(--shadow); animation:rise .35s ease }
   @keyframes rise{ from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none} }
@@ -517,7 +526,8 @@ function openModal(id){
     </div>`;
   modalBg.classList.add('on'); document.getElementById('mClose').onclick=closeModal; modal.scrollTop=0;
   const mbar=modal.querySelector('.savebar');
-  mbar.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>doSave(b.dataset.save, modal, p.name+'_人類圖深解', mbar));
+  mbar.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>captureFramed(b.dataset.save, modal.querySelector('.modal-bd'),
+    p.name+' · 本命深解', `${TYPE[p.type].label}　｜　${p.profile}　｜　${AUTH[p.authority].label}`, p.name+'_人類圖深解', mbar));
 }
 function closeModal(){ modalBg.classList.remove('on'); }
 modalBg.addEventListener('click',e=>{ if(e.target===modalBg) closeModal(); });
@@ -561,34 +571,39 @@ function drawCal(){
 /* ===== 下載圖片 / PDF / 寄送 Email ===== */
 const saveBar=document.getElementById('saveBar');
 saveBar.innerHTML=`<button data-save="png">📥 存成圖片</button><button data-save="pdf">📄 存成 PDF</button><button data-save="mail">✉️ 寄送到 Email</button>`;
-saveBar.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>doSave(b.dataset.save, document.getElementById('analysis'), '我們家的人類圖_關係場', saveBar));
+saveBar.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>{
+  const ids=ORDER.filter(i=>scene.has(i));
+  const sub=ids.map(i=>PEOPLE[i].emoji+' '+PEOPLE[i].name).join('　');
+  captureFramed(b.dataset.save, document.getElementById('analysis'), '我們家的人類圖 · 關係場', sub, '我們家的人類圖_關係場', saveBar);
+});
 
-async function nodeToCanvas(node){
-  const hide=[...node.querySelectorAll('.savebar,.close')];
-  hide.forEach(el=>{ el.dataset._d=el.style.display; el.style.display='none'; });
-  const om=node.style.maxHeight, oo=node.style.overflow;
-  node.style.maxHeight='none'; node.style.overflow='visible';
-  const bg=getComputedStyle(document.body).backgroundColor||'#fbf7f0';
-  const canvas=await html2canvas(node,{scale:2,backgroundColor:bg,useCORS:true,logging:false});
-  node.style.maxHeight=om; node.style.overflow=oo;
-  hide.forEach(el=>{ el.style.display=el.dataset._d||''; });
-  return canvas;
+function exportFrame(bodyNode,title,subtitle){
+  const w=document.createElement('div'); w.className='export-frame';
+  w.innerHTML=`<div class="ef-head"><div class="ef-brand">🌙 Birth with Milliya ｜ 家庭人類圖</div>
+    <div class="ef-title">${title}</div>${subtitle?`<div class="ef-sub">${subtitle}</div>`:''}</div>
+    <div class="ef-body"></div>
+    <div class="ef-foot">此為能量傾向的參考，非命定，也不取代你對家人的真實理解與愛。<br>Birth with Milliya　·　${new Date().toLocaleDateString('zh-TW')}</div>`;
+  w.querySelector('.ef-body').appendChild(bodyNode);
+  document.body.appendChild(w); return w;
 }
-async function doSave(kind,node,name,bar){
-  if(kind==='mail') return doMail(node,name);
+async function captureFramed(kind, srcNode, title, subtitle, filename, bar){
+  if(kind==='mail') return doMail(srcNode, filename);
   if(!window.html2canvas||!window.jspdf){ alert('下載元件還在載入中，請幾秒後再試一次 🙏'); return; }
   const btns=bar.querySelectorAll('button'); const old=[...btns].map(b=>b.textContent);
-  btns.forEach(b=>b.disabled=true); bar.querySelector('[data-save="'+kind+'"]').textContent='產生中…';
+  btns.forEach(b=>b.disabled=true); const hit=bar.querySelector('[data-save="'+kind+'"]'); if(hit) hit.textContent='產生中…';
+  const clone=srcNode.cloneNode(true); clone.querySelectorAll('.savebar,.close').forEach(e=>e.remove());
+  clone.style.maxHeight='none'; clone.style.overflow='visible';
+  const frame=exportFrame(clone,title,subtitle);
   try{
-    const canvas=await nodeToCanvas(node);
-    if(kind==='png'){ const a=document.createElement('a'); a.href=canvas.toDataURL('image/png'); a.download=name+'.png'; a.click(); }
-    else{ const img=canvas.toDataURL('image/jpeg',0.93); const {jsPDF}=window.jspdf; const pdf=new jsPDF('p','mm','a4');
+    const canvas=await html2canvas(frame,{scale:2,backgroundColor:'#fbf7f0',useCORS:true,logging:false,windowWidth:840});
+    if(kind==='png'){ const a=document.createElement('a'); a.href=canvas.toDataURL('image/png'); a.download=filename+'.png'; a.click(); }
+    else{ const img=canvas.toDataURL('image/jpeg',0.94); const {jsPDF}=window.jspdf; const pdf=new jsPDF('p','mm','a4');
       const pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight(); const ih=canvas.height*pw/canvas.width;
       let left=ih, pos=0; pdf.addImage(img,'JPEG',0,pos,pw,ih); left-=ph;
       while(left>0){ pos-=ph; pdf.addPage(); pdf.addImage(img,'JPEG',0,pos,pw,ih); left-=ph; }
-      pdf.save(name+'.pdf'); }
+      pdf.save(filename+'.pdf'); }
   }catch(err){ alert('產生失敗：'+err.message); }
-  btns.forEach((b,i)=>{ b.disabled=false; b.textContent=old[i]; });
+  frame.remove(); btns.forEach((b,i)=>{ b.disabled=false; b.textContent=old[i]; });
 }
 function doMail(node,name){
   const email=(prompt('要把結果寄到哪個 Email？\n（填了會用你的信箱 App 開啟、自動帶入內容與收件人，你按送出即可；也可留空自己填）')||'').trim();
