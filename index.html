@@ -62,6 +62,12 @@
   .presets{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:14px }
   .preset{ background:var(--bg2); border:1px solid var(--line); color:var(--ink); border-radius:20px; padding:6px 14px; cursor:pointer; font-size:13px; transition:.15s }
   .preset:hover{ background:var(--gold); color:#fff; border-color:var(--gold) }
+  .savebar{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:2px 0 24px }
+  .savebar button{ background:var(--card); border:1px solid var(--gold); color:var(--gold-d); border-radius:22px;
+    padding:9px 18px; cursor:pointer; font-size:13.5px; font-weight:700; box-shadow:var(--shadow); transition:.15s }
+  .savebar button:hover{ background:var(--gold); color:#fff }
+  .savebar button:disabled{ opacity:.55; cursor:default }
+  .savebar.inmodal{ margin:20px 0 2px; border-top:1px solid var(--line); padding-top:18px }
   .analysis{ margin-top:22px }
   .a-card{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px 22px; margin-bottom:16px; box-shadow:var(--shadow); animation:rise .35s ease }
   @keyframes rise{ from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none} }
@@ -144,6 +150,7 @@
     <div class="presets" id="presets"></div>
   </div>
   <div class="analysis" id="analysis"></div>
+  <div id="saveBar" class="savebar" style="display:none"></div>
 
   <div id="cal-sec" class="section-title"><span>2026 流年行運 · 啟動地圖 + 每月提醒</span></div>
   <p class="lead">行運＝天上的行星每天走過不同閘門；當它走到你命盤某個「懸掛閘門」的另一端，那條通道會<b>暫時接通</b>，你會短暫體驗到那股能量。下面每個人的「啟動開關」是<b>精算</b>的；至於 2026 哪個月剛好被點到，需要星曆／行運 App 對日期（若你要精準版，我可用各人生日做個人行運回歸）。先選月份看整體氛圍與各人生活提醒：</p>
@@ -153,6 +160,9 @@
 </div>
 
 <div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 
 <footer><div class="disc">
   本命資料（類型·權威·角色·定義中心·通道·閘門）逐一判讀自各人命盤圖；合圖與行運依人類圖經典原理計算。
@@ -340,6 +350,7 @@ function render(){
     c.innerHTML=`<span class="ava" style="background:${p.color}">${p.emoji}</span>${p.name}<span class="x" data-x="${id}">×</span>`; chips.appendChild(c); });
   chips.querySelectorAll('[data-x]').forEach(x=>x.onclick=()=>{scene.delete(x.dataset.x);render();});
   renderAnalysis(ids);
+  saveBar.style.display=ids.length?'flex':'none';
 }
 function renderAnalysis(ids){
   analysis.innerHTML=''; if(ids.length===0) return;
@@ -501,9 +512,12 @@ function openModal(id){
         <ul class="clist">${hang||"<li>（幾乎沒有懸掛閘門）</li>"}</ul></div>
 
       <div class="pnote"><h4>💛 給${p.name}的話</h4><p>${p.personal}</p></div>
+      <div class="savebar inmodal"><button data-save="png">📥 存成圖片</button><button data-save="pdf">📄 存成 PDF</button><button data-save="mail">✉️ 寄送到 Email</button></div>
       <p class="small" style="margin-top:16px">＊定義中心/通道/懸掛閘門由命盤圖的啟動閘門精算；小圖判讀個別閘門或有極小誤差，如需可再核對。</p>
     </div>`;
   modalBg.classList.add('on'); document.getElementById('mClose').onclick=closeModal; modal.scrollTop=0;
+  const mbar=modal.querySelector('.savebar');
+  mbar.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>doSave(b.dataset.save, modal, p.name+'_人類圖深解', mbar));
 }
 function closeModal(){ modalBg.classList.remove('on'); }
 modalBg.addEventListener('click',e=>{ if(e.target===modalBg) closeModal(); });
@@ -544,6 +558,47 @@ function drawCal(){
       <small>${TYPE[p.type].label}·${p.profile}</small></div><p>${PRACTICE[p.type][idx]}</p>
       <div class="th">留意訊號：${p.notSelf}亮起＝回到「${p.strategy}」</div></div>`; }).join('');
 }
+/* ===== 下載圖片 / PDF / 寄送 Email ===== */
+const saveBar=document.getElementById('saveBar');
+saveBar.innerHTML=`<button data-save="png">📥 存成圖片</button><button data-save="pdf">📄 存成 PDF</button><button data-save="mail">✉️ 寄送到 Email</button>`;
+saveBar.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>doSave(b.dataset.save, document.getElementById('analysis'), '我們家的人類圖_關係場', saveBar));
+
+async function nodeToCanvas(node){
+  const hide=[...node.querySelectorAll('.savebar,.close')];
+  hide.forEach(el=>{ el.dataset._d=el.style.display; el.style.display='none'; });
+  const om=node.style.maxHeight, oo=node.style.overflow;
+  node.style.maxHeight='none'; node.style.overflow='visible';
+  const bg=getComputedStyle(document.body).backgroundColor||'#fbf7f0';
+  const canvas=await html2canvas(node,{scale:2,backgroundColor:bg,useCORS:true,logging:false});
+  node.style.maxHeight=om; node.style.overflow=oo;
+  hide.forEach(el=>{ el.style.display=el.dataset._d||''; });
+  return canvas;
+}
+async function doSave(kind,node,name,bar){
+  if(kind==='mail') return doMail(node,name);
+  if(!window.html2canvas||!window.jspdf){ alert('下載元件還在載入中，請幾秒後再試一次 🙏'); return; }
+  const btns=bar.querySelectorAll('button'); const old=[...btns].map(b=>b.textContent);
+  btns.forEach(b=>b.disabled=true); bar.querySelector('[data-save="'+kind+'"]').textContent='產生中…';
+  try{
+    const canvas=await nodeToCanvas(node);
+    if(kind==='png'){ const a=document.createElement('a'); a.href=canvas.toDataURL('image/png'); a.download=name+'.png'; a.click(); }
+    else{ const img=canvas.toDataURL('image/jpeg',0.93); const {jsPDF}=window.jspdf; const pdf=new jsPDF('p','mm','a4');
+      const pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight(); const ih=canvas.height*pw/canvas.width;
+      let left=ih, pos=0; pdf.addImage(img,'JPEG',0,pos,pw,ih); left-=ph;
+      while(left>0){ pos-=ph; pdf.addPage(); pdf.addImage(img,'JPEG',0,pos,pw,ih); left-=ph; }
+      pdf.save(name+'.pdf'); }
+  }catch(err){ alert('產生失敗：'+err.message); }
+  btns.forEach((b,i)=>{ b.disabled=false; b.textContent=old[i]; });
+}
+function doMail(node,name){
+  const email=(prompt('要把結果寄到哪個 Email？\n（填了會用你的信箱 App 開啟、自動帶入內容與收件人，你按送出即可；也可留空自己填）')||'').trim();
+  let text=node.innerText.replace(/\n{3,}/g,'\n\n').trim();
+  if(text.length>1500) text=text.slice(0,1500)+'\n…（完整版請用「存成 PDF」下載）';
+  const subject=encodeURIComponent('我們家的人類圖 · '+name);
+  const body=encodeURIComponent(text+'\n\n— 由 Birth with Milliya 的家庭人類圖工具產生');
+  window.location.href='mailto:'+email+'?subject='+subject+'&body='+body;
+}
+
 drawCal(); render();
 </script>
 </body>
