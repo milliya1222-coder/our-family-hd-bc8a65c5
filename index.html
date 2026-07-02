@@ -597,8 +597,11 @@ async function captureFramed(kind, srcNode, title, subtitle, filename, bar){
   try{
     const canvas=await html2canvas(frame,{scale:2,backgroundColor:'#fbf7f0',useCORS:true,logging:false,windowWidth:840});
     if(kind==='png'){ const a=document.createElement('a'); a.href=canvas.toDataURL('image/png'); a.download=filename+'.png'; a.click(); }
-    else{ const img=canvas.toDataURL('image/jpeg',0.94); const {jsPDF}=window.jspdf; const pdf=new jsPDF('p','mm','a4');
-      const pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight(); const ih=canvas.height*pw/canvas.width;
+    else{ // 先把畫布壓到不透明的奶油底畫布上（雙保險：即使有透明也不會變黑）
+      const flat=document.createElement('canvas'); flat.width=canvas.width; flat.height=canvas.height;
+      const fx=flat.getContext('2d'); fx.fillStyle='#fbf7f0'; fx.fillRect(0,0,flat.width,flat.height); fx.drawImage(canvas,0,0);
+      const img=flat.toDataURL('image/jpeg',0.95); const {jsPDF}=window.jspdf; const pdf=new jsPDF('p','mm','a4');
+      const pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight(); const ih=flat.height*pw/flat.width;
       let left=ih, pos=0; pdf.addImage(img,'JPEG',0,pos,pw,ih); left-=ph;
       while(left>0){ pos-=ph; pdf.addPage(); pdf.addImage(img,'JPEG',0,pos,pw,ih); left-=ph; }
       pdf.save(filename+'.pdf'); }
