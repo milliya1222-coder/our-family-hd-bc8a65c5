@@ -600,10 +600,10 @@ async function captureFramed(kind, srcNode, title, subtitle, filename, bar){
     else{ // 先把畫布壓到不透明的奶油底畫布上（雙保險：即使有透明也不會變黑）
       const flat=document.createElement('canvas'); flat.width=canvas.width; flat.height=canvas.height;
       const fx=flat.getContext('2d'); fx.fillStyle='#fbf7f0'; fx.fillRect(0,0,flat.width,flat.height); fx.drawImage(canvas,0,0);
-      const img=flat.toDataURL('image/jpeg',0.95); const {jsPDF}=window.jspdf; const pdf=new jsPDF('p','mm','a4');
-      const pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight(); const ih=flat.height*pw/flat.width;
-      let left=ih, pos=0; pdf.addImage(img,'JPEG',0,pos,pw,ih); left-=ph;
-      while(left>0){ pos-=ph; pdf.addPage(); pdf.addImage(img,'JPEG',0,pos,pw,ih); left-=ph; }
+      const img=flat.toDataURL('image/jpeg',0.95); const {jsPDF}=window.jspdf;
+      const pw=210, ph=pw*flat.height/flat.width;   // 單頁：頁高隨內容，整張塞一頁
+      const pdf=new jsPDF({orientation:'p', unit:'mm', format:[pw, ph]});
+      pdf.addImage(img,'JPEG',0,0,pw,ph);
       pdf.save(filename+'.pdf'); }
   }catch(err){ alert('產生失敗：'+err.message); }
   frame.remove(); btns.forEach((b,i)=>{ b.disabled=false; b.textContent=old[i]; });
